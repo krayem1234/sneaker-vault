@@ -49,6 +49,25 @@ export class AuthService {
     return { ok: true }
   }
 
+  async updateProfile(userId: string, data: { name?: string; email?: string }) {
+    if (data.email) {
+      const existing = await this.prisma.user.findUnique({ where: { email: data.email } })
+      if (existing && existing.id !== userId) throw new ConflictException('Cet email est déjà utilisé par un autre compte')
+    }
+    const user = await this.prisma.user.update({ where: { id: userId }, data })
+    return this.signToken(user.id, user.email, user.name, user.role)
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable')
+    const valid = await bcrypt.compare(currentPassword, user.password)
+    if (!valid) throw new BadRequestException('Mot de passe actuel incorrect')
+    const hash = await bcrypt.hash(newPassword, 10)
+    await this.prisma.user.update({ where: { id: userId }, data: { password: hash } })
+    return { ok: true }
+  }
+
   private signToken(sub: string, email: string, name: string, role: string) {
     const token = this.jwt.sign({ sub, email, role })
     return { token, user: { id: sub, email, name, role } }

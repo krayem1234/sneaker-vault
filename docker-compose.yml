@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: "file:./dev.db"
+      JWT_SECRET: "sneaker-vault-dev-secret-change-me"
+      PORT: 3002
+      FRONTEND_URL: "http://localhost:5174"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      MAIL_FROM: "Vault Kicks <onboarding@resend.dev>"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      ADMIN_EMAIL: "admin@vaultkicks.dev"
+      ADMIN_PASSWORD: "change-me-now"
+    volumes:
+      - backend_db:/app/prisma
+      - backend_uploads:/app/uploads
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5174:5174"
+    environment:
+      VITE_API_URL: "http://localhost:3002"
+    depends_on:
+      - backend
+
+volumes:
+  backend_db:
+  backend_uploads:

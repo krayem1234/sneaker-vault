@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -16,6 +16,10 @@ model User {
   createdAt   DateTime  @default(now())
   orders      Order[]
   resetTokens PasswordResetToken[]
+  wishlist    WishlistItem[]
+  reviews     Review[]
+  addresses   Address[]
+  pushTokens  PushToken[]
 }
 
 model PasswordResetToken {
@@ -41,13 +45,16 @@ model Product {
   slug        String           @unique
   description String
   priceCents  Int
-  images      String[]
+  images      String   // JSON-encoded string[] (SQLite n'a pas de type liste natif)
   categoryId  String
   category    Category         @relation(fields: [categoryId], references: [id])
   featured    Boolean          @default(false)
   createdAt   DateTime         @default(now())
   variants    ProductVariant[]
   orderItems  OrderItem[]
+  wishlistedBy WishlistItem[]
+  reviews     Review[]
+  stockNotifications StockNotification[]
 }
 
 model ProductVariant {
@@ -68,6 +75,8 @@ model Order {
   email           String
   status          String      @default("pending") // "pending" | "paid" | "cancelled"
   totalCents      Int
+  discountCents   Int         @default(0)
+  promoCode       String?
   stripeSessionId String?     @unique
   items           OrderItem[]
   createdAt       DateTime    @default(now())
@@ -83,4 +92,73 @@ model OrderItem {
   variantId   String
   quantity    Int
   unitPriceCents Int
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model PromoCode {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  percentOff Int
+  active     Boolean   @default(true)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model StockNotification {
+  id        String   @id @default(cuid())
+  email     String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  size      String
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([email, productId, size])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  label     String   @default("Domicile")
+  fullName  String
+  line1     String
+  line2     String?
+  city      String
+  zip       String
+  country   String   @default("Tunisie")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  token     String   @unique
+  platform  String?
+  createdAt DateTime @default(now())
 }

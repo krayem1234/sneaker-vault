@@ -56,4 +56,32 @@ export class MailService {
     `
     return this.send(to, 'Confirmation de commande — Vault Kicks', html)
   }
+
+  async sendOrderStatusUpdate(to: string, orderId: string, status: string) {
+    const label = status === 'shipped' ? 'expédiée 📦' : status === 'cancelled' ? 'annulée' : status === 'paid' ? 'payée' : 'en attente'
+    const html = `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#111;">Mise à jour de ta commande</h2>
+        <p style="color:#333; font-size: 15px; line-height: 1.6;">
+          Ta commande <strong>#${orderId.slice(-8).toUpperCase()}</strong> est maintenant <strong>${label}</strong>.
+        </p>
+      </div>
+    `
+    return this.send(to, `Commande #${orderId.slice(-8).toUpperCase()} — ${label}`, html)
+  }
+
+  async sendBackInStock(to: string, productName: string, size: string, productUrl: string) {
+    const html = `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color:#111;">De retour en stock 🙌</h2>
+        <p style="color:#333; font-size: 15px; line-height: 1.6;">
+          <strong>${productName}</strong> (taille ${size}) est de nouveau disponible — les stocks sont limités.
+        </p>
+        <a href="${productUrl}" style="display:inline-block; margin-top:12px; background:#ff5a1f; color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:600;">
+          Voir le produit
+        </a>
+      </div>
+    `
+    return this.send(to, `${productName} est de nouveau en stock`, html)
+  }
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { apiFetch } from '../lib/api'
 import { PackageIcon } from '../components/icons'
+import OrderTimeline from '../components/OrderTimeline'
 
 export default function OrderHistoryPage() {
   const { token } = useAuth()
@@ -34,15 +35,16 @@ export default function OrderHistoryPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>#{o.id.slice(-8).toUpperCase()}</div>
                 <span className="badge" style={{
-                  background: o.status === 'paid' ? 'rgba(52,211,153,0.15)' : 'var(--chip-bg)',
-                  color: o.status === 'paid' ? 'var(--green)' : 'var(--muted)',
+                  background: o.status === 'shipped' ? 'rgba(99,102,241,0.15)' : o.status === 'paid' ? 'rgba(52,211,153,0.15)' : o.status === 'cancelled' ? 'var(--danger-bg)' : 'var(--chip-bg)',
+                  color: o.status === 'shipped' ? '#818cf8' : o.status === 'paid' ? 'var(--green)' : o.status === 'cancelled' ? 'var(--danger-text)' : 'var(--muted)',
                 }}>
-                  {o.status === 'paid' ? 'Payée' : o.status === 'cancelled' ? 'Annulée' : 'En attente'}
+                  {o.status === 'shipped' ? 'Expédiée' : o.status === 'paid' ? 'Payée' : o.status === 'cancelled' ? 'Annulée' : 'En attente'}
                 </span>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--muted)', marginBottom: 8 }}>
                 {new Date(o.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
               </div>
+              <OrderTimeline status={o.status} />
               {o.items.map((it: any) => (
                 <div key={it.id} style={{ fontSize: 13, display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
                   <span style={{ color: 'var(--muted)' }}>{it.product.name} — taille {it.variant.size} × {it.quantity}</span>

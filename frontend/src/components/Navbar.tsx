@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useCart } from '../lib/cart'
+import { useWishlist } from '../lib/wishlist'
 import ThemeToggle from './ThemeToggle'
-import { BagIcon, UserIcon, LogOutIcon, SettingsIcon } from './icons'
+import { BagIcon, UserIcon, LogOutIcon, SettingsIcon, HeartIcon } from './icons'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
-  const { count } = useCart()
+  const { count, clear } = useCart()
+  const { products: wishlistProducts } = useWishlist()
   const navigate = useNavigate()
 
   return (
@@ -29,6 +31,20 @@ export default function Navbar() {
           </Link>
         )}
         <ThemeToggle />
+        {user && (
+          <Link to="/wishlist" className="icon-btn" title="Favoris">
+            <HeartIcon />
+            {wishlistProducts.length > 0 && (
+              <span style={{
+                position: 'absolute', top: 2, right: 2, background: 'var(--accent)', color: '#fff',
+                fontSize: 10, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px',
+              }}>
+                {wishlistProducts.length}
+              </span>
+            )}
+          </Link>
+        )}
         <Link to="/cart" className="icon-btn" title="Panier">
           <BagIcon />
           {count > 0 && (
@@ -42,9 +58,14 @@ export default function Navbar() {
           )}
         </Link>
         {user ? (
-          <button className="icon-btn" title={`${user.name} — déconnexion`} onClick={() => { logout(); navigate('/') }}>
-            <LogOutIcon size={16} />
-          </button>
+          <>
+            <Link to="/profile" className="icon-btn" title="Mon compte">
+              <UserIcon size={16} />
+            </Link>
+            <button className="icon-btn" title={`${user.name} — déconnexion`} onClick={() => { logout(); clear(); navigate('/') }}>
+              <LogOutIcon size={16} />
+            </button>
+          </>
         ) : (
           <Link to="/login" className="icon-btn" title="Connexion">
             <UserIcon />

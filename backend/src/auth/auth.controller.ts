@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common'
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { Body, Controller, Patch, Post, Req, UseGuards } from '@nestjs/common'
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator'
 import { AuthService } from './auth.service'
+import { JwtAuthGuard } from './jwt-auth.guard'
 
 class RegisterDto {
   @IsEmail() email: string
@@ -17,6 +18,14 @@ class ForgotPasswordDto {
 class ResetPasswordDto {
   @IsString() token: string
   @IsString() @MinLength(6) password: string
+}
+class UpdateProfileDto {
+  @IsOptional() @IsString() @MinLength(2) name?: string
+  @IsOptional() @IsEmail() email?: string
+}
+class ChangePasswordDto {
+  @IsString() currentPassword: string
+  @IsString() @MinLength(6) newPassword: string
 }
 
 @Controller('auth')
@@ -41,5 +50,17 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto.token, dto.password)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(req.user.sub, dto)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  changePassword(@Req() req: any, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(req.user.sub, dto.currentPassword, dto.newPassword)
   }
 }
